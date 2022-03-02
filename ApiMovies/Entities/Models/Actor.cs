@@ -1,11 +1,9 @@
-﻿using ApiMovies.Database.Base;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace ApiMovies.Entities.Models
 {
-    public class Actor : IEntityBase
+    public class Actor
     {
         public int Id { get; set; }
         [Required]
@@ -14,8 +12,6 @@ namespace ApiMovies.Entities.Models
         public DateTime DateOfBirth { get; set; }
         public string Biography { get; set; }
         public string Picture { get; set; }
-        public DateTime Created { get; set; }
-
-        public List<Movie_Actor> Actor_Movies{ get; set; }
+        public DateTime Created { get; set; }        
     }
 }

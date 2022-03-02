@@ -1,5 +1,4 @@
 ﻿using ApiMovies.Validations;
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace ApiMovies.Entities.DTO

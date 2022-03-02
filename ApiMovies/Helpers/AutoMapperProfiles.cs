@@ -8,13 +8,24 @@ namespace ApiMovies.Helpers
     {
         public AutoMapperProfiles()
         {
-            CreateMap<ActorDTO, Actor>().ReverseMap();
+            CreateMap<ActorDTO, Actor>()
+                .ReverseMap();
+
             CreateMap<ActorCreationDTO, Actor>()
                 .ForMember(x => x.Picture, options => options.Ignore());
-            CreateMap<ActorUpdateDTO, Actor>().ReverseMap();
+
+            CreateMap<ActorUpdateDTO, Actor>()                
+                .ForMember(x => x.Picture, options => options.Ignore());
 
             CreateMap<GenreDTO, Genre>().ReverseMap();
+
             CreateMap<GenreCreationDTO, Genre>();
+
+            CreateMap<MovieCreationDTO, Movie>()
+                .ForMember(x => x.Poster, options => options.Ignore());
+
+            CreateMap<MovieUpdateDTO, Movie>()
+                .ForMember(x => x.Poster, options => options.Ignore());               
         }
     }
 }

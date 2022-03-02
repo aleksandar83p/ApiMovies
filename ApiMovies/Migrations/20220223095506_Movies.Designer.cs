@@ -4,14 +4,16 @@ using ApiMovies.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ApiMovies.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220223095506_Movies")]
+    partial class Movies
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -127,18 +129,18 @@ namespace ApiMovies.Migrations
 
             modelBuilder.Entity("ApiMovies.Entities.Models.Movie_Genre", b =>
                 {
-                    b.Property<int>("MovieId")
+                    b.Property<int>("GenreId")
                         .HasColumnType("int");
 
-                    b.Property<int>("GenreId")
+                    b.Property<int>("MovieId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("MovieId", "GenreId");
+                    b.HasKey("GenreId", "MovieId");
 
-                    b.HasIndex("GenreId");
+                    b.HasIndex("MovieId");
 
                     b.ToTable("MovieGenres");
                 });
@@ -146,13 +148,13 @@ namespace ApiMovies.Migrations
             modelBuilder.Entity("ApiMovies.Entities.Models.Movie_Actor", b =>
                 {
                     b.HasOne("ApiMovies.Entities.Models.Actor", "Actor")
-                        .WithMany()
+                        .WithMany("Actor_Movies")
                         .HasForeignKey("ActorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ApiMovies.Entities.Models.Movie", "Movie")
-                        .WithMany()
+                        .WithMany("Movie_Actors")
                         .HasForeignKey("MovieId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -164,14 +166,14 @@ namespace ApiMovies.Migrations
 
             modelBuilder.Entity("ApiMovies.Entities.Models.Movie_Genre", b =>
                 {
-                    b.HasOne("ApiMovies.Entities.Models.Genre", "Genre")
-                        .WithMany()
+                    b.HasOne("ApiMovies.Entities.Models.Movie", "Movie")
+                        .WithMany("Movie_Genres")
                         .HasForeignKey("GenreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ApiMovies.Entities.Models.Movie", "Movie")
-                        .WithMany()
+                    b.HasOne("ApiMovies.Entities.Models.Genre", "Genre")
+                        .WithMany("Genre_Movies")
                         .HasForeignKey("MovieId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -179,6 +181,23 @@ namespace ApiMovies.Migrations
                     b.Navigation("Genre");
 
                     b.Navigation("Movie");
+                });
+
+            modelBuilder.Entity("ApiMovies.Entities.Models.Actor", b =>
+                {
+                    b.Navigation("Actor_Movies");
+                });
+
+            modelBuilder.Entity("ApiMovies.Entities.Models.Genre", b =>
+                {
+                    b.Navigation("Genre_Movies");
+                });
+
+            modelBuilder.Entity("ApiMovies.Entities.Models.Movie", b =>
+                {
+                    b.Navigation("Movie_Actors");
+
+                    b.Navigation("Movie_Genres");
                 });
 #pragma warning restore 612, 618
         }

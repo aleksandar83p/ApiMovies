@@ -1,12 +1,8 @@
 ﻿using ApiMovies.Entities.DTO;
-using ApiMovies.Entities.Models;
-using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using ApiMovies.Database.Services;
+using ApiMovies.Database.Services.Interface;
 
 namespace ApiMovies.Controllers
 {
@@ -14,13 +10,11 @@ namespace ApiMovies.Controllers
     [ApiController]
     public class GenresController : ControllerBase
     {
-        private readonly IGenresService _GenreRepository;
-        private readonly IMapper _Mapper;
+        private readonly IGenresService _service;       
 
-        public GenresController(IGenresService genreRepository, IMapper mapper)
+        public GenresController(IGenresService genreRepository)
         {
-            _GenreRepository = genreRepository;
-            _Mapper = mapper;
+            _service = genreRepository;         
         }
 
         [HttpGet]
@@ -28,9 +22,8 @@ namespace ApiMovies.Controllers
         {
             try
             {
-                var genres = await _GenreRepository.GetAllAsync();
-                var genresDTO = _Mapper.Map<List<GenreDTO>>(genres);
-                return Ok(genresDTO);
+                var genres = await _service.GetAllGenresAsync();                
+                return Ok(genres);
             }
             catch
             {
@@ -43,15 +36,14 @@ namespace ApiMovies.Controllers
         {
             try
             {
-                var genre = await _GenreRepository.GetByIdAsync(id);
+                var genre = await _service.GetGenreByIdAsync(id);
 
                 if (genre == null)
                 {
                     return NotFound($"Genre with ID {id} not found.");
                 }
-
-                var genreDTO = _Mapper.Map<GenreDTO>(genre);
-                return Ok(genreDTO);
+                
+                return Ok(genre);
             }
             catch
             {
@@ -64,16 +56,13 @@ namespace ApiMovies.Controllers
         {
             try
             {
-                var genre = _Mapper.Map<Genre>(genreCreationDTO);
-
                 if (genreCreationDTO == null)
                 {
                     return BadRequest();
                 }
-
-                genre.Created = DateTime.Now;
-                await _GenreRepository.AddAsync(genre);
-                return Created(nameof(PostGenreAsync), genre);
+             
+                await _service.AddGenreAsync(genreCreationDTO);
+                return Created(nameof(PostGenreAsync), genreCreationDTO);
             }
             catch
             {
@@ -86,8 +75,6 @@ namespace ApiMovies.Controllers
         {
             try
             {
-                var genre = await _GenreRepository.GetByIdAsync(id);
-
                 if (id != genreUpdateDTO.Id)
                 {
                     return BadRequest("Genre ID mismatch");
@@ -96,13 +83,10 @@ namespace ApiMovies.Controllers
                 if (genreUpdateDTO == null)
                 {
                     return NotFound($"Genre with ID = {id} not found.");
-                }
+                }              
 
-                var updateGenre = _Mapper.Map<Genre>(genreUpdateDTO);
-                updateGenre.Created = genre.Created;
-
-                await _GenreRepository.UpdateAsync(id, updateGenre);
-                return Ok(updateGenre);
+                await _service.UpdateGenreAsync(id, genreUpdateDTO);
+                return Ok(genreUpdateDTO);
             }
             catch
             {
@@ -115,14 +99,14 @@ namespace ApiMovies.Controllers
         {
             try
             {
-                var deleteGenre = await _GenreRepository.GetByIdAsync(id);
+                var deleteGenre = await _service.GetGenreByIdAsync(id);
 
                 if (deleteGenre == null)
                 {
                     return BadRequest($"Genre with ID = {id} not found.");
                 }
            
-                await _GenreRepository.DeleteAsync(id);
+                await _service.DeleteGenreAsync(id);
 
                 return Ok($"Genre with ID {id} deleted.");
             }

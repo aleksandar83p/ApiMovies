@@ -1,13 +1,9 @@
 ﻿using ApiMovies.Entities.DTO;
-using ApiMovies.Entities.Models;
-using ApiMovies.Helpers;
-using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using ApiMovies.Database.Services;
+using ApiMovies.Database.Services.Interface;
+using System;
 
 namespace ApiMovies.Controllers
 {
@@ -15,16 +11,11 @@ namespace ApiMovies.Controllers
     [ApiController]
     public class ActorsController : ControllerBase
     {
-        private readonly IActorsService _service;
-        private readonly IMapper _mapper;
-        private readonly IFileStorageService _fileStorageService;
-        private readonly string _containerName = "Actors";
+        private readonly IActorsService _service;      
 
-        public ActorsController(IActorsService actorRepository, IMapper mapper, IFileStorageService fileStorageService)
+        public ActorsController(IActorsService actorRepository)
         {
             this._service = actorRepository;
-            _mapper = mapper;
-            _fileStorageService = fileStorageService;
         }
 
         [HttpGet]
@@ -32,9 +23,8 @@ namespace ApiMovies.Controllers
         {
             try
             {
-                var actors = await _service.GetAllAsync();
-                var actorsDTO = _mapper.Map<List<ActorDTO>>(actors);
-                return Ok(actorsDTO);
+                var actors = await _service.GetAllActorsAsync();                
+                return Ok(actors);
             }
             catch
             {
@@ -47,15 +37,14 @@ namespace ApiMovies.Controllers
         {
             try
             {
-                var actor = await _service.GetByIdAsync(id);
+                var actor = await _service.GetActorByIdAsync(id);
 
                 if(actor == null)
                 {
                     return NotFound($"Actor with ID {id} not found.");
                 }
-
-                var actorDTO = _mapper.Map<ActorDTO>(actor);
-                return Ok(actorDTO);
+                
+                return Ok(actor);
             }
             catch
             {
@@ -68,21 +57,17 @@ namespace ApiMovies.Controllers
         {
             try
             {
-                var actor = _mapper.Map<Actor>(actorCreationDTO);
-
                 if (actorCreationDTO == null)
                 {
                     return BadRequest();
                 }
-
-                if (actorCreationDTO.Picture != null)
-                {
-                    actor.Picture = await _fileStorageService.SaveFile(_containerName, actorCreationDTO.Picture);
-                }
-
-                actor.Created = DateTime.Now;                
-                await _service.AddAsync(actor);                
-                return Created(nameof(PostAsync), actor);               
+                             
+                await _service.AddActorAsync(actorCreationDTO);                
+                return Created(nameof(PostAsync), actorCreationDTO);
+            }
+            catch (Exception e)
+            {
+                return Content($"{e}", "application/json");
             }
             catch
             {
@@ -95,7 +80,7 @@ namespace ApiMovies.Controllers
         {
             try
             {
-                var actor = await _service.GetByIdAsync(id);                
+               // var actor = await _service.GetActorByIdAsync(id);                
 
                 if (id != actorUpdateDTO.Id)
                 {
@@ -105,21 +90,14 @@ namespace ApiMovies.Controllers
                 if(actorUpdateDTO == null)
                 {
                     return NotFound($"Actor with ID = {id} not found.");
-                }
+                }            
 
-                string pictureDB = "";
-
-                if(actorUpdateDTO.Picture != null)
-                {
-                    pictureDB = await _fileStorageService.EditFile(_containerName, actorUpdateDTO.Picture, actor.Picture);                   
-                }
-
-                var updateActor = _mapper.Map<Actor>(actorUpdateDTO);
-                updateActor.Picture = pictureDB;
-                updateActor.Created = actor.Created;
-
-                await _service.UpdateAsync(id, updateActor);
-                return Ok(updateActor);
+                await _service.UpdateActorAsync(id, actorUpdateDTO);
+                return Ok(actorUpdateDTO);
+            }
+            catch (Exception e)
+            {
+                return Content($"{e}", "application/json");
             }
             catch
             {
@@ -132,15 +110,14 @@ namespace ApiMovies.Controllers
         {
             try
             {
-                var deleteActor = await _service.GetByIdAsync(id);
+                var deleteActor = await _service.GetActorByIdAsync(id);
 
                 if(deleteActor == null)
                 {
                     return NotFound($"Actor with ID = {id} not found.");
                 }
-
-                await _fileStorageService.DeleteFile(deleteActor.Picture, _containerName);
-                await _service.DeleteAsync(id);
+                
+                await _service.DeleteActorAsync(id);
 
                 return Ok($"Actor with ID {id} deleted.");
             }

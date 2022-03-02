@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace ApiMovies.Entities.Models
 {
@@ -7,6 +8,7 @@ namespace ApiMovies.Entities.Models
         [StringLength(maximumLength: 75)]
         public string CharacterName { get; set; }
         public int OrderInCharactersList { get; set; }
+        public DateTime Created { get; set; }
 
         public int MovieId { get; set; }
         public Movie Movie { get; set; }

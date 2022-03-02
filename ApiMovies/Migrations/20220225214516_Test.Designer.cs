@@ -4,14 +4,16 @@ using ApiMovies.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ApiMovies.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220225214516_Test")]
+    partial class Test
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,6 +37,9 @@ namespace ApiMovies.Migrations
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("MovieId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -44,6 +49,8 @@ namespace ApiMovies.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MovieId");
 
                     b.ToTable("Actors");
                 });
@@ -58,12 +65,17 @@ namespace ApiMovies.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("MovieId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MovieId");
 
                     b.ToTable("Genres");
                 });
@@ -143,10 +155,24 @@ namespace ApiMovies.Migrations
                     b.ToTable("MovieGenres");
                 });
 
+            modelBuilder.Entity("ApiMovies.Entities.Models.Actor", b =>
+                {
+                    b.HasOne("ApiMovies.Entities.Models.Movie", null)
+                        .WithMany("Movie_Actors")
+                        .HasForeignKey("MovieId");
+                });
+
+            modelBuilder.Entity("ApiMovies.Entities.Models.Genre", b =>
+                {
+                    b.HasOne("ApiMovies.Entities.Models.Movie", null)
+                        .WithMany("Movie_Genres")
+                        .HasForeignKey("MovieId");
+                });
+
             modelBuilder.Entity("ApiMovies.Entities.Models.Movie_Actor", b =>
                 {
                     b.HasOne("ApiMovies.Entities.Models.Actor", "Actor")
-                        .WithMany()
+                        .WithMany("Actor_Movies")
                         .HasForeignKey("ActorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -165,7 +191,7 @@ namespace ApiMovies.Migrations
             modelBuilder.Entity("ApiMovies.Entities.Models.Movie_Genre", b =>
                 {
                     b.HasOne("ApiMovies.Entities.Models.Genre", "Genre")
-                        .WithMany()
+                        .WithMany("Genre_Movies")
                         .HasForeignKey("GenreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -179,6 +205,23 @@ namespace ApiMovies.Migrations
                     b.Navigation("Genre");
 
                     b.Navigation("Movie");
+                });
+
+            modelBuilder.Entity("ApiMovies.Entities.Models.Actor", b =>
+                {
+                    b.Navigation("Actor_Movies");
+                });
+
+            modelBuilder.Entity("ApiMovies.Entities.Models.Genre", b =>
+                {
+                    b.Navigation("Genre_Movies");
+                });
+
+            modelBuilder.Entity("ApiMovies.Entities.Models.Movie", b =>
+                {
+                    b.Navigation("Movie_Actors");
+
+                    b.Navigation("Movie_Genres");
                 });
 #pragma warning restore 612, 618
         }

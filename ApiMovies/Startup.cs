@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using ApiMovies.Database.Services.Interface;
 using ApiMovies.Database.Services;
 
 namespace ApiMovies
@@ -29,7 +30,9 @@ namespace ApiMovies
             //Services configuration   
             services.AddScoped<IFileStorageService, FileStorageService>();
             services.AddScoped<IActorsService, ActorsService>();           
-            services.AddScoped<IGenresService, GenresService>();
+            services.AddScoped<IGenresService, GenresService>();            
+            services.AddScoped<IMoviesService, MoviesService>();
+
             services.AddHttpContextAccessor(); // treba za kacenje slika 
             services.AddAutoMapper(typeof(Startup));
 
