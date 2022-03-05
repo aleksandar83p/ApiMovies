@@ -9,6 +9,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using ApiMovies.Database.Services.Interface;
 using ApiMovies.Database.Services;
+using ApiMovies.Entities.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace ApiMovies
 {
@@ -16,6 +23,7 @@ namespace ApiMovies
     {
         public Startup(IConfiguration configuration)
         {
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             Configuration = configuration;            
         }
 
@@ -41,9 +49,28 @@ namespace ApiMovies
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ApiMovies", Version = "v1" });
             });
 
+            // Authentication and authorizaation
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(Configuration["keyjwt"])),
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
+
+
             services.AddControllers();
-
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,12 +89,15 @@ namespace ApiMovies
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+
+            AppDbInitializer.SeedUsersAndRolesAsync(app).Wait();
         }
     }
 }

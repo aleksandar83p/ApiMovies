@@ -4,7 +4,6 @@ using ApiMovies.Entities.Models;
 using ApiMovies.Helpers;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -83,7 +82,8 @@ namespace ApiMovies.Database.Services
                     movieDto.Movie_Genres.Add(genreDto);
                 }
                 dtoMovies.Add(movieDto);
-            }
+            }          
+
             return dtoMovies;
         }
 
@@ -143,7 +143,17 @@ namespace ApiMovies.Database.Services
                     genreDto.Name = genre.Name;
 
                 dtoMovie.Movie_Genres.Add(genreDto);
-                }               
+                }
+
+            // load ratings for movie
+            var averageVote = 0.0;
+            var userVote = 0;
+
+            if (await _context.Ratings.AnyAsync(x => x.MovieId == id))
+            {
+                averageVote = await _context.Ratings.Where(x => x.MovieId == id).AverageAsync(x => x.Rate);               
+            }
+
             return dtoMovie;
         }
 

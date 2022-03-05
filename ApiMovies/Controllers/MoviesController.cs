@@ -1,6 +1,8 @@
 ﻿using ApiMovies.Database.Services.Interface;
 using ApiMovies.Entities.DTO;
 using ApiMovies.Helpers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -10,6 +12,7 @@ namespace ApiMovies.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class MoviesController : ControllerBase
     {
         private readonly IMoviesService _service;       
@@ -41,6 +44,7 @@ namespace ApiMovies.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetByIdAsync(int id)
         {
             try
