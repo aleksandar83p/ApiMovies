@@ -1,10 +1,9 @@
 ﻿using ApiMovies.Database.Services.Interface;
 using ApiMovies.Entities.DTO;
-using ApiMovies.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -15,14 +14,13 @@ namespace ApiMovies.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
     public class MoviesController : ControllerBase
     {
-        private readonly IMoviesService _service;       
-        private readonly IFileStorageService _fileStorageService;
-        private readonly string _containerName = "Movies";
+        private readonly IMoviesService _service;
+        private readonly ILogger<MoviesController> _logger;
 
-        public MoviesController(IMoviesService moviesService, IFileStorageService fileStorageService)
+        public MoviesController(IMoviesService moviesService, ILogger<MoviesController> logger)
         {
-            _service = moviesService;          
-            _fileStorageService = fileStorageService;
+            _service = moviesService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -34,13 +32,10 @@ namespace ApiMovies.Controllers
                 var movies = await _service.GetAllMoviesAsync(sortBy, searchString, pageNumber);               
                 return Ok(movies);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return Content($"{e}", "application/json");
-            }
-            catch
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from database");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -57,9 +52,10 @@ namespace ApiMovies.Controllers
                 }
                 return Ok(movie);
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from database");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -76,13 +72,10 @@ namespace ApiMovies.Controllers
                 await _service.AddMoviesAsync(movieCreationDTO);               
                 return Created(nameof(PostAsync), movieCreationDTO);
             }
-            catch(Exception e)
+            catch (Exception ex)
             {
-                return Content($"{e}", "application/json");  
-            }
-            catch
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error creating new movie record");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -104,13 +97,10 @@ namespace ApiMovies.Controllers
                 await _service.UpdateMoviesAsync(id, MovieDTOupdate);
                 return Ok(MovieDTOupdate);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return Content($"{e}", "application/json");
-            }
-            catch
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error updating actor record");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -125,24 +115,16 @@ namespace ApiMovies.Controllers
                 {
                     return NotFound($"Movie with ID = {id} not found.");
                 }
-
-                if(deleteMovie.Poster != null)
-                {
-                    await _fileStorageService.DeleteFile(deleteMovie.Poster, _containerName);
-                }
                 
                 await _service.DeleteMoviesAsync(id);
 
                 return Ok($"Movie with ID {id} deleted.");
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return Content($"{e}", "application/json");
+                _logger.LogError(ex.ToString());
+                throw;
             }
-            catch
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error deleting actor record");
-            }            
         }
     }
 }

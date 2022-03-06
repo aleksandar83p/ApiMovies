@@ -1,10 +1,11 @@
 ﻿using ApiMovies.Entities.DTO;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using ApiMovies.Database.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Logging;
+using System;
 
 namespace ApiMovies.Controllers
 {
@@ -13,11 +14,13 @@ namespace ApiMovies.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
     public class GenresController : ControllerBase
     {
-        private readonly IGenresService _service;       
+        private readonly IGenresService _service;
+        private readonly ILogger<GenresController> _logger;
 
-        public GenresController(IGenresService genreRepository)
+        public GenresController(IGenresService genreRepository, ILogger<GenresController> logger)
         {
-            _service = genreRepository;         
+            _service = genreRepository;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -29,9 +32,10 @@ namespace ApiMovies.Controllers
                 var genres = await _service.GetAllGenresAsync(sortBy, searchString, pageNumber);                
                 return Ok(genres);
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from database");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -50,9 +54,10 @@ namespace ApiMovies.Controllers
                 
                 return Ok(genre);
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from database");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -69,9 +74,10 @@ namespace ApiMovies.Controllers
                 await _service.AddGenreAsync(genreCreationDTO);
                 return Created(nameof(PostGenreAsync), genreCreationDTO);
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error creating new genre record");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -93,9 +99,10 @@ namespace ApiMovies.Controllers
                 await _service.UpdateGenreAsync(id, genreUpdateDTO);
                 return Ok(genreUpdateDTO);
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error updating genre record");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -115,9 +122,10 @@ namespace ApiMovies.Controllers
 
                 return Ok($"Genre with ID {id} deleted.");
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error deleting genre record");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
     }

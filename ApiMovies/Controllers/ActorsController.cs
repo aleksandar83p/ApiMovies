@@ -1,11 +1,11 @@
 ﻿using ApiMovies.Entities.DTO;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using ApiMovies.Database.Services.Interface;
 using System;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Logging;
 
 namespace ApiMovies.Controllers
 {
@@ -14,11 +14,13 @@ namespace ApiMovies.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
     public class ActorsController : ControllerBase
     {
-        private readonly IActorsService _service;      
+        private readonly IActorsService _service;
+        private readonly ILogger<ActorsController> _logger;
 
-        public ActorsController(IActorsService actorRepository)
+        public ActorsController(IActorsService actorRepository, ILogger<ActorsController> logger)
         {
-            this._service = actorRepository;
+            _service = actorRepository;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -30,9 +32,10 @@ namespace ApiMovies.Controllers
                 var actors = await _service.GetAllActorsAsync(sortBy, searchString, pageNumber);                
                 return Ok(actors);
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from database");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -51,9 +54,10 @@ namespace ApiMovies.Controllers
                 
                 return Ok(actor);
             }
-            catch
+            catch(Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving data from database");
+                _logger.LogError(ex.ToString());
+                throw;               
             }
         }
 
@@ -70,13 +74,10 @@ namespace ApiMovies.Controllers
                 await _service.AddActorAsync(actorCreationDTO);                
                 return Created(nameof(PostAsync), actorCreationDTO);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return Content($"{e}", "application/json");
-            }
-            catch
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error creating new actor record");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -85,8 +86,6 @@ namespace ApiMovies.Controllers
         {
             try
             {
-               // var actor = await _service.GetActorByIdAsync(id);                
-
                 if (id != actorUpdateDTO.Id)
                 {
                     return BadRequest("Actor ID mismatch");
@@ -100,13 +99,10 @@ namespace ApiMovies.Controllers
                 await _service.UpdateActorAsync(id, actorUpdateDTO);
                 return Ok(actorUpdateDTO);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return Content($"{e}", "application/json");
-            }
-            catch
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error updating actor record");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
 
@@ -126,9 +122,10 @@ namespace ApiMovies.Controllers
 
                 return Ok($"Actor with ID {id} deleted.");
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error deleting actor record");
+                _logger.LogError(ex.ToString());
+                throw;
             }
         }
     }
