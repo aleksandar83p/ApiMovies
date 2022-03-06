@@ -25,7 +25,7 @@ namespace ApiMovies.Database.Services
             _fileStorageService = fileStorageService;
         }
 
-        public async Task<List<MovieDTO>> GetAllMoviesAsync()
+        public async Task<List<MovieDTO>> GetAllMoviesAsync(string sortBy, string searchString, int? pageNumber)
         {
             var actorsForThisMovie = new List<Actor>();
             var genresForThisMovie = new List<Genre>();
@@ -48,6 +48,7 @@ namespace ApiMovies.Database.Services
                 movieDto.Trailer = movie.Trailer;
                 movieDto.Summary = movie.Summary;
                 movieDto.ReleaseDate = movie.ReleaseDate;
+                movieDto.Poster = movie.Poster;
                 movieDto.Created = DateTime.Now;   
 
                 // load actors for movie
@@ -82,7 +83,38 @@ namespace ApiMovies.Database.Services
                     movieDto.Movie_Genres.Add(genreDto);
                 }
                 dtoMovies.Add(movieDto);
-            }          
+            }
+
+            // Sorting
+            dtoMovies = dtoMovies.OrderBy(x => x.Title).ToList();
+
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                switch (sortBy)
+                {
+                    case "title_desc":
+                    dtoMovies = dtoMovies.OrderByDescending(x => x.Title).ToList();
+                        break;
+                    case "release_asc":
+                        dtoMovies = dtoMovies.OrderBy(x => x.ReleaseDate).ToList();
+                        break;
+                    case "release_desc":
+                        dtoMovies = dtoMovies.OrderByDescending(x => x.ReleaseDate).ToList();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // Search
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                dtoMovies = dtoMovies.Where(x => x.Title.Contains(searchString, StringComparison.CurrentCultureIgnoreCase)).ToList();
+            }
+
+            // Pagination
+            int pageSize = 5;
+            dtoMovies = PaginatedList<MovieDTO>.Create(dtoMovies.AsQueryable(), pageNumber ?? 1, pageSize);
 
             return dtoMovies;
         }
@@ -112,6 +144,7 @@ namespace ApiMovies.Database.Services
             dtoMovie.Trailer = movie.Trailer;
             dtoMovie.Summary = movie.Summary;
             dtoMovie.ReleaseDate = movie.ReleaseDate;
+            dtoMovie.Poster = movie.Poster;
             dtoMovie.Created = DateTime.Now;
 
             // load actors for movie

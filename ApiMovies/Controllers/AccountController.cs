@@ -1,15 +1,8 @@
-﻿using ApiMovies.Database;
+﻿using ApiMovies.Database.Services.Interface;
 using ApiMovies.Entities.DTO;
-using ApiMovies.Entities.Models;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ApiMovies.Controllers
@@ -18,78 +11,67 @@ namespace ApiMovies.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;        
-        private readonly IConfiguration _configuration;
-        public AccountController(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,            
-            IConfiguration configuration
-            )
+        private readonly IAccountService _service;
+        
+        public AccountController(IAccountService service)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;          
-            _configuration = configuration;
+            _service = service;            
         }
 
-        [HttpPost("create")]
-        public async Task<ActionResult<AuthenticationResponse>> Create([FromBody] UserDTO userCredentials)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] UserCredentials userCredentials)
         {
-            var user = new ApplicationUser
+            var result = await _service.RegisterAsync(userCredentials);
+            
+            if(result != null)
             {
-                UserName = userCredentials.UserName,
-                Email = userCredentials.Email,
-                FullName = userCredentials.FullName
-            }
-            ;
-            var result = await _userManager.CreateAsync(user, userCredentials.Password);
-
-            if (result.Succeeded)
-            {
-                return BuildToken(userCredentials);
+                return Ok(result.Token);
             }
             else
             {
-                return BadRequest(result.Errors);
+                return BadRequest();
             }
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<AuthenticationResponse>> Login([FromBody] UserDTO userCredentials)
+        public async Task<IActionResult> Login([FromBody] UserCredentials userCredentials)
         {
-            var result = await _signInManager.PasswordSignInAsync(userCredentials.Email,
-                userCredentials.Password, isPersistent: false, lockoutOnFailure: false);
 
-            if (result.Succeeded)
+            var result = await _service.LoginAsync(userCredentials);
+
+            if(result != null)
             {
-                return BuildToken(userCredentials);
+                return Ok(result.Token);
             }
             else
             {
-                return BadRequest("Incorrect Login");
+                return BadRequest();
             }
         }
 
-        private AuthenticationResponse BuildToken(UserDTO userCredentials)
+        [HttpPost("makeAdmin")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
+        public async Task<IActionResult> MakeAdmin([FromBody] AdminDTO makeAdminDTO)
         {
-            var claims = new List<Claim>();
-            {
-                new Claim("email", userCredentials.Email);
-            };
+            await _service.MakeAdminAsync(makeAdminDTO);            
+            return NoContent();
+        }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["keyjwt"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        [HttpPost("removeAdmin")]
+         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
+        public async Task<IActionResult> RemoveAdmin([FromBody] AdminDTO makeAdminDTO)
+        {
+            await _service.RemoveAdminAsync(makeAdminDTO);
+            return NoContent();
+        }
 
-            var expiration = DateTime.UtcNow.AddDays(1);
+        [HttpGet("listUsers")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
+        public async Task<IActionResult> GetListUsersAsync([FromQuery] string sortBy, [FromQuery] string searchString, [FromQuery] int? pageNumber)
+        {
 
-            var token = new JwtSecurityToken(issuer: null, audience: null, claims: claims,
-                expires: expiration, signingCredentials: creds);
-
-            return new AuthenticationResponse()
-            {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                Expiration = expiration
-            };
+            var result = await _service.GetListOfUsersAsync(sortBy, searchString, pageNumber);
+            return Ok(result);
         }
     }
 }

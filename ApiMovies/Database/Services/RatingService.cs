@@ -14,9 +14,10 @@ namespace ApiMovies.Database.Services
         private ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;       
 
-        public RatingService(ApplicationDbContext context, UserManager<ApplicationUser> _userManager)
+        public RatingService(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
-            _context = context;           
+            _context = context;
+            _userManager = userManager;
         }
 
         public async Task AddRatingAsync(string email, RatingCreateDTO ratingCreateDTO)

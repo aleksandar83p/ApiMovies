@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using ApiMovies.Database.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace ApiMovies.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
     public class GenresController : ControllerBase
     {
         private readonly IGenresService _service;       
@@ -18,11 +21,12 @@ namespace ApiMovies.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllGenresAsync()
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllGenresAsync([FromQuery] string sortBy, [FromQuery] string searchString, [FromQuery] int? pageNumber)
         {
             try
             {
-                var genres = await _service.GetAllGenresAsync();                
+                var genres = await _service.GetAllGenresAsync(sortBy, searchString, pageNumber);                
                 return Ok(genres);
             }
             catch
@@ -32,6 +36,7 @@ namespace ApiMovies.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetGenreByIdAsync(int id)
         {
             try

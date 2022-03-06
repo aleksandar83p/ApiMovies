@@ -40,6 +40,7 @@ namespace ApiMovies
             services.AddScoped<IActorsService, ActorsService>();           
             services.AddScoped<IGenresService, GenresService>();            
             services.AddScoped<IMoviesService, MoviesService>();
+            services.AddScoped<IAccountService, AccountService>();
 
             services.AddHttpContextAccessor(); // treba za kacenje slika 
             services.AddAutoMapper(typeof(Startup));
@@ -68,6 +69,11 @@ namespace ApiMovies
                         ClockSkew = TimeSpan.Zero
                     };
                 });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("IsAdmin", policy => policy.RequireClaim("role", "admin"));
+            });
 
 
             services.AddControllers();

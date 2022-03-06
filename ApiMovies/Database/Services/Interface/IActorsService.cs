@@ -6,7 +6,7 @@ namespace ApiMovies.Database.Services.Interface
 {
     public interface IActorsService 
     {
-        Task<List<ActorDTO>> GetAllActorsAsync();
+        Task<List<ActorDTO>> GetAllActorsAsync(string sortBy, string searchString, int? pageNumber);
         Task<ActorDTO> GetActorByIdAsync(int id);
         Task AddActorAsync(ActorCreationDTO actorCreationDTO);
         Task UpdateActorAsync(int id, ActorUpdateDTO actorUpdateDTO);

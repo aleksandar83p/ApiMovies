@@ -12,7 +12,7 @@ namespace ApiMovies.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
     public class MoviesController : ControllerBase
     {
         private readonly IMoviesService _service;       
@@ -26,11 +26,12 @@ namespace ApiMovies.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAsync()
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllAsync([FromQuery] string sortBy, [FromQuery] string searchString, [FromQuery] int? pageNumber)
         {
             try
             {
-                var movies = await _service.GetAllMoviesAsync();               
+                var movies = await _service.GetAllMoviesAsync(sortBy, searchString, pageNumber);               
                 return Ok(movies);
             }
             catch (Exception e)
@@ -62,7 +63,7 @@ namespace ApiMovies.Controllers
             }
         }
 
-        [HttpPost]
+        [HttpPost]        
         public async Task<IActionResult> PostAsync([FromForm] MovieCreationDTO movieCreationDTO)
         {
             try

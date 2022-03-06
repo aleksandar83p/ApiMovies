@@ -5,6 +5,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ApiMovies.Database.Services
@@ -19,10 +20,35 @@ namespace ApiMovies.Database.Services
             _mapper = mapper;
         }
 
-        public async Task<List<GenreDTO>> GetAllGenresAsync()
+        public async Task<List<GenreDTO>> GetAllGenresAsync(string sortBy, string searchString, int? pageNumber)
         {
             var genres = await _context.Genres.ToListAsync();
             var genresDTO = _mapper.Map<List<GenreDTO>>(genres);
+
+            // Sorting
+            genresDTO = genresDTO.OrderBy(x => x.Name).ToList();
+
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                switch (sortBy)
+                {
+                    case "name_desc":
+                        genresDTO = genresDTO.OrderByDescending(x => x.Name).ToList();
+                        break;                  
+                    default:
+                        break;
+                }
+            }
+
+            // Search
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                genresDTO = genresDTO.Where(x => x.Name.Contains(searchString, StringComparison.CurrentCultureIgnoreCase)).ToList();
+            }
+
+            // Pagination
+            int pageSize = 5;
+            genresDTO = PaginatedList<GenreDTO>.Create(genresDTO.AsQueryable(), pageNumber ?? 1, pageSize);
 
             return genresDTO;
         }

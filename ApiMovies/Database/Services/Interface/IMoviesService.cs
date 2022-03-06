@@ -6,7 +6,7 @@ namespace ApiMovies.Database.Services.Interface
 {
     public interface IMoviesService
     {
-        Task<List<MovieDTO>> GetAllMoviesAsync();
+        Task<List<MovieDTO>> GetAllMoviesAsync(string sortBy, string searchString, int? pageNumber);
         Task<MovieDTO> GetMoviesByIdAsync(int id);
         Task AddMoviesAsync(MovieCreationDTO movieCreationDTO);
         Task UpdateMoviesAsync(int id, MovieUpdateDTO movieDtoUpdate);

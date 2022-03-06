@@ -2,7 +2,7 @@
 
 namespace ApiMovies.Entities.DTO
 {
-    public class UserLoginDTO
+    public class UserCredentials
     {
         [Required]
         [EmailAddress]

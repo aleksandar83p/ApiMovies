@@ -4,11 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using ApiMovies.Database.Services.Interface;
 using System;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace ApiMovies.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
     public class ActorsController : ControllerBase
     {
         private readonly IActorsService _service;      
@@ -19,11 +22,12 @@ namespace ApiMovies.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAsync()
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllAsync([FromQuery] string sortBy, [FromQuery] string searchString, [FromQuery] int? pageNumber)
         {
             try
             {
-                var actors = await _service.GetAllActorsAsync();                
+                var actors = await _service.GetAllActorsAsync(sortBy, searchString, pageNumber);                
                 return Ok(actors);
             }
             catch
@@ -33,6 +37,7 @@ namespace ApiMovies.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetByIdAsync(int id)
         {
             try

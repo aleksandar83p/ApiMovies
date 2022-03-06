@@ -6,6 +6,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ApiMovies.Database.Services
@@ -23,10 +24,41 @@ namespace ApiMovies.Database.Services
             _mapper = mapper;
             _fileStorageService = fileStorageService;
         }
-        public async Task<List<ActorDTO>> GetAllActorsAsync()
+        public async Task<List<ActorDTO>> GetAllActorsAsync(string sortBy, string searchString, int? pageNumber)
         {
             var actors = await _context.Actors.ToListAsync();
             var actorsDTO = _mapper.Map<List<ActorDTO>>(actors);
+
+            // Sorting
+            actorsDTO = actorsDTO.OrderBy(x => x.Name).ToList();
+
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                switch (sortBy)
+                {
+                    case "name_desc":
+                        actorsDTO = actorsDTO.OrderByDescending(x => x.Name).ToList();
+                        break;
+                    case "dob_acv":
+                        actorsDTO = actorsDTO.OrderBy(x => x.DateOfBirth).ToList();
+                        break;
+                    case "dob_desc":
+                        actorsDTO = actorsDTO.OrderByDescending(x => x.DateOfBirth).ToList();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // Search
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                actorsDTO = actorsDTO.Where(x => x.Name.Contains(searchString, StringComparison.CurrentCultureIgnoreCase)).ToList();
+            }
+
+            // Pagination
+            int pageSize = 5;
+            actorsDTO = PaginatedList<ActorDTO>.Create(actorsDTO.AsQueryable(), pageNumber ?? 1, pageSize);
 
             return actorsDTO;
         }

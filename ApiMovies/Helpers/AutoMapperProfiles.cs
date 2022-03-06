@@ -21,11 +21,15 @@ namespace ApiMovies.Helpers
 
             CreateMap<GenreCreationDTO, Genre>();
 
+            CreateMap<MovieDTO, Movie>().ReverseMap();
+
             CreateMap<MovieCreationDTO, Movie>()
                 .ForMember(x => x.Poster, options => options.Ignore());
 
             CreateMap<MovieUpdateDTO, Movie>()
-                .ForMember(x => x.Poster, options => options.Ignore());               
+                .ForMember(x => x.Poster, options => options.Ignore());
+
+            CreateMap<ApplicationUser, UserDTO>().ReverseMap();
         }
     }
 }
