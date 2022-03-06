@@ -16,6 +16,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using ApiMovies.Filter;
+using Microsoft.Extensions.Logging;
+using ApiMovies.Logger;
 
 namespace ApiMovies
 {
@@ -41,6 +44,7 @@ namespace ApiMovies
             services.AddScoped<IGenresService, GenresService>();            
             services.AddScoped<IMoviesService, MoviesService>();
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<ILogger, ExceptionLogger>();
 
             services.AddHttpContextAccessor(); // treba za kacenje slika 
             services.AddAutoMapper(typeof(Startup));
@@ -75,8 +79,11 @@ namespace ApiMovies
                 options.AddPolicy("IsAdmin", policy => policy.RequireClaim("role", "admin"));
             });
 
-
-            services.AddControllers();
+            // Filter exception for all controllers
+            services.AddControllers(options => 
+            {
+                options.Filters.Add(typeof(ExceptionFilter));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

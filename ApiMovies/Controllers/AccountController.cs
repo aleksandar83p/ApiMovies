@@ -3,8 +3,6 @@ using ApiMovies.Entities.DTO;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System;
 using System.Threading.Tasks;
 
 namespace ApiMovies.Controllers
@@ -13,107 +11,61 @@ namespace ApiMovies.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly IAccountService _service;
-        private readonly ILogger<AccountController> _logger;
+        private readonly IAccountService _service;        
 
-        public AccountController(IAccountService service, ILogger<AccountController> logger)
+        public AccountController(IAccountService service)
         {
-            _service = service;
-            _logger = logger;
+            _service = service;            
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserCredentials userCredentials)
         {
-            try
-            {
-                var result = await _service.RegisterAsync(userCredentials);
+            var result = await _service.RegisterAsync(userCredentials);
 
-                if (result != null)
-                {
-                    return Ok(result.Token);
-                }
-                else
-                {
-                    return BadRequest();
-                }
-            }            
-            catch (Exception ex)
+            if (result == null)
             {
-                _logger.LogError(ex.ToString());
-                throw;
+                return BadRequest();
             }
+
+            return Ok(result.Token);
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserCredentials userCredentials)
         {
-            try
-            {
-                var result = await _service.LoginAsync(userCredentials);
+            var result = await _service.LoginAsync(userCredentials);
 
-                if (result != null)
-                {
-                    return Ok(result.Token);
-                }
-                else
-                {
-                    return BadRequest();
-                }
-            }
-            catch (Exception ex)
+            if (result == null)
             {
-                _logger.LogError(ex.ToString());
-                throw;
-            }            
+                return BadRequest();
+            }
+
+            return Ok(result.Token);
         }
 
         [HttpPost("makeAdmin")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<IActionResult> MakeAdmin([FromBody] AdminDTO makeAdminDTO)
         {
-            try
-            {
-                await _service.MakeAdminAsync(makeAdminDTO);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-                throw;
-            }            
+            await _service.MakeAdminAsync(makeAdminDTO);
+            return NoContent();
         }
 
         [HttpPost("removeAdmin")]
-         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<IActionResult> RemoveAdmin([FromBody] AdminDTO makeAdminDTO)
         {
-            try
-            {
-                await _service.RemoveAdminAsync(makeAdminDTO);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-                throw;
-            }            
+            await _service.RemoveAdminAsync(makeAdminDTO);
+            return NoContent();
         }
 
         [HttpGet("listUsers")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<IActionResult> GetListUsersAsync([FromQuery] string sortBy, [FromQuery] string searchString, [FromQuery] int? pageNumber)
         {
-            try
-            {
-                var result = await _service.GetListOfUsersAsync(sortBy, searchString, pageNumber);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-                throw;
-            }            
+            var result = await _service.GetListOfUsersAsync(sortBy, searchString, pageNumber);
+            return Ok(result);
         }
     }
 }

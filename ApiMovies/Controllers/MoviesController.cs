@@ -3,8 +3,6 @@ using ApiMovies.Entities.DTO;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System;
 using System.Threading.Tasks;
 
 namespace ApiMovies.Controllers
@@ -14,117 +12,77 @@ namespace ApiMovies.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
     public class MoviesController : ControllerBase
     {
-        private readonly IMoviesService _service;
-        private readonly ILogger<MoviesController> _logger;
+        private readonly IMoviesService _service;        
 
-        public MoviesController(IMoviesService moviesService, ILogger<MoviesController> logger)
+        public MoviesController(IMoviesService moviesService)
         {
-            _service = moviesService;
-            _logger = logger;
+            _service = moviesService;            
         }
 
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllAsync([FromQuery] string sortBy, [FromQuery] string searchString, [FromQuery] int? pageNumber)
         {
-            try
-            {
-                var movies = await _service.GetAllMoviesAsync(sortBy, searchString, pageNumber);               
-                return Ok(movies);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-                throw;
-            }
+            var movies = await _service.GetAllMoviesAsync(sortBy, searchString, pageNumber);
+            return Ok(movies);
         }
 
         [HttpGet("{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetByIdAsync(int id)
         {
-            try
+            var movie = await _service.GetMoviesByIdAsync(id);
+
+            if (movie == null)
             {
-                var movie = await _service.GetMoviesByIdAsync(id);
-                if(movie == null)
-                {
-                    return NotFound($"Movie with ID = {id} not found.");
-                }
-                return Ok(movie);
+                return NotFound($"Movie with ID = {id} not found.");
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-                throw;
-            }
+
+            return Ok(movie);
         }
 
-        [HttpPost]        
+        [HttpPost]
         public async Task<IActionResult> PostAsync([FromForm] MovieCreationDTO movieCreationDTO)
         {
-            try
+            if (movieCreationDTO == null)
             {
-                if (movieCreationDTO == null)
-                {
-                    return BadRequest();
-                }
-               
-                await _service.AddMoviesAsync(movieCreationDTO);               
-                return Created(nameof(PostAsync), movieCreationDTO);
+                return BadRequest();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-                throw;
-            }
+
+            await _service.AddMoviesAsync(movieCreationDTO);
+            return Created(nameof(PostAsync), movieCreationDTO);
         }
 
         [HttpPut]
         public async Task<IActionResult> PutAsync(int id, [FromForm] MovieUpdateDTO MovieDTOupdate)
         {
-            try
+            if (id != MovieDTOupdate.Id)
             {
-                if (id != MovieDTOupdate.Id)
-                {
-                    return BadRequest("Movie ID mismatch");
-                }
-
-                if (MovieDTOupdate == null)
-                {
-                    return NotFound($"Movie with ID = {id} not found.");
-                }
-
-                await _service.UpdateMoviesAsync(id, MovieDTOupdate);
-                return Ok(MovieDTOupdate);
+                return BadRequest("Movie ID mismatch");
             }
-            catch (Exception ex)
+
+            if (MovieDTOupdate == null)
             {
-                _logger.LogError(ex.ToString());
-                throw;
+                return NotFound($"Movie with ID = {id} not found.");
             }
+
+            await _service.UpdateMoviesAsync(id, MovieDTOupdate);
+            return Ok(MovieDTOupdate);
         }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteAsync(int id)
         {
-            try
-            {
-                var deleteMovie = await _service.GetMoviesByIdAsync(id);
+            var deleteMovie = await _service.GetMoviesByIdAsync(id);
 
-                if (deleteMovie == null)
-                {
-                    return NotFound($"Movie with ID = {id} not found.");
-                }
-                
-                await _service.DeleteMoviesAsync(id);
-
-                return Ok($"Movie with ID {id} deleted.");
-            }
-            catch (Exception ex)
+            if (deleteMovie == null)
             {
-                _logger.LogError(ex.ToString());
-                throw;
+                return NotFound($"Movie with ID = {id} not found.");
             }
+
+            await _service.DeleteMoviesAsync(id);
+
+            return Ok($"Movie with ID {id} deleted.");
         }
     }
 }

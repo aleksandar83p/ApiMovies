@@ -1,7 +1,6 @@
 ﻿using ApiMovies.Database.Services.Interface;
 using ApiMovies.Entities.DTO;
 using ApiMovies.Entities.Models;
-using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;

@@ -2,10 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using ApiMovies.Database.Services.Interface;
-using System;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Logging;
 
 namespace ApiMovies.Controllers
 {
@@ -14,119 +12,76 @@ namespace ApiMovies.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
     public class ActorsController : ControllerBase
     {
-        private readonly IActorsService _service;
-        private readonly ILogger<ActorsController> _logger;
-
-        public ActorsController(IActorsService actorRepository, ILogger<ActorsController> logger)
+        private readonly IActorsService _service;        
+        public ActorsController(IActorsService actorRepository)
         {
-            _service = actorRepository;
-            _logger = logger;
+            _service = actorRepository;           
         }
 
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllAsync([FromQuery] string sortBy, [FromQuery] string searchString, [FromQuery] int? pageNumber)
         {
-            try
-            {
-                var actors = await _service.GetAllActorsAsync(sortBy, searchString, pageNumber);                
-                return Ok(actors);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-                throw;
-            }
+            var actors = await _service.GetAllActorsAsync(sortBy, searchString, pageNumber);
+            return Ok(actors);
         }
 
         [HttpGet("{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetByIdAsync(int id)
         {
-            try
-            {
-                var actor = await _service.GetActorByIdAsync(id);
+            var actor = await _service.GetActorByIdAsync(id);
 
-                if(actor == null)
-                {
-                    return NotFound($"Actor with ID {id} not found.");
-                }
-                
-                return Ok(actor);
-            }
-            catch(Exception ex)
+            if (actor == null)
             {
-                _logger.LogError(ex.ToString());
-                throw;               
+                return NotFound($"Actor with ID {id} not found.");
             }
+
+            return Ok(actor);
         }
 
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromForm] ActorCreationDTO actorCreationDTO)
         {
-            try
+            if (actorCreationDTO == null)
             {
-                if (actorCreationDTO == null)
-                {
-                    return BadRequest();
-                }
-                             
-                await _service.AddActorAsync(actorCreationDTO);                
-                return Created(nameof(PostAsync), actorCreationDTO);
+                return BadRequest();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-                throw;
-            }
+
+            await _service.AddActorAsync(actorCreationDTO);
+            return Created(nameof(PostAsync), actorCreationDTO);
         }
 
         [HttpPut]
         public async Task<IActionResult> PutAsync(int id, [FromForm] ActorUpdateDTO actorUpdateDTO)
         {
-            try
+            if (id != actorUpdateDTO.Id)
             {
-                if (id != actorUpdateDTO.Id)
-                {
-                    return BadRequest("Actor ID mismatch");
-                }                
-
-                if(actorUpdateDTO == null)
-                {
-                    return NotFound($"Actor with ID = {id} not found.");
-                }            
-
-                await _service.UpdateActorAsync(id, actorUpdateDTO);
-                return Ok(actorUpdateDTO);
+                return BadRequest("Actor ID mismatch");
             }
-            catch (Exception ex)
+
+            if (actorUpdateDTO == null)
             {
-                _logger.LogError(ex.ToString());
-                throw;
+                return NotFound($"Actor with ID = {id} not found.");
             }
+
+            await _service.UpdateActorAsync(id, actorUpdateDTO);
+            return Ok(actorUpdateDTO);
         }
 
         [HttpDelete]
         public async Task<IActionResult> DeleteAsync(int id)
         {
-            try
-            {
-                var deleteActor = await _service.GetActorByIdAsync(id);
+            var deleteActor = await _service.GetActorByIdAsync(id);
 
-                if(deleteActor == null)
-                {
-                    return NotFound($"Actor with ID = {id} not found.");
-                }
-                
-                await _service.DeleteActorAsync(id);
-
-                return Ok($"Actor with ID {id} deleted.");
-            }
-            catch (Exception ex)
+            if (deleteActor == null)
             {
-                _logger.LogError(ex.ToString());
-                throw;
+                return NotFound($"Actor with ID = {id} not found.");
             }
+
+            await _service.DeleteActorAsync(id);
+
+            return Ok($"Actor with ID {id} deleted.");
         }
     }
 }
