@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace ApiMovies.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AccountController : ControllerBase
+    [Route("api/[controller]")]    
+    public class AccountController : BaseController
     {
         private readonly IAccountService _service;        
 

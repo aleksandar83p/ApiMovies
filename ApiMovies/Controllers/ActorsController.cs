@@ -7,10 +7,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace ApiMovies.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    [Route("api/[controller]")]    
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
-    public class ActorsController : ControllerBase
+    public class ActorsController : BaseController
     {
         private readonly IActorsService _service;        
         public ActorsController(IActorsService actorRepository)

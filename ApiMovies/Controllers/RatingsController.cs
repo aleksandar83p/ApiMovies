@@ -9,9 +9,8 @@ using System.Threading.Tasks;
 
 namespace ApiMovies.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class RatingsController : ControllerBase
+    [Route("api/[controller]")]   
+    public class RatingsController : BaseController
     {
         private readonly IRatingService _service;     
 

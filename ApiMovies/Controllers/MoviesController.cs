@@ -7,10 +7,9 @@ using System.Threading.Tasks;
 
 namespace ApiMovies.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    [Route("api/[controller]")]    
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
-    public class MoviesController : ControllerBase
+    public class MoviesController : BaseController
     {
         private readonly IMoviesService _service;        
 
@@ -42,6 +41,7 @@ namespace ApiMovies.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> PostAsync([FromForm] MovieCreationDTO movieCreationDTO)
         {
             if (movieCreationDTO == null)
@@ -54,6 +54,7 @@ namespace ApiMovies.Controllers
         }
 
         [HttpPut]
+        [AllowAnonymous]
         public async Task<IActionResult> PutAsync(int id, [FromForm] MovieUpdateDTO MovieDTOupdate)
         {
             if (id != MovieDTOupdate.Id)

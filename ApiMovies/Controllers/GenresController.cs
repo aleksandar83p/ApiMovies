@@ -7,10 +7,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace ApiMovies.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    [Route("api/[controller]")]   
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
-    public class GenresController : ControllerBase
+    public class GenresController : BaseController
     {
         private readonly IGenresService _service;        
 

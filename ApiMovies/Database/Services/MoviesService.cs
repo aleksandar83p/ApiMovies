@@ -27,61 +27,15 @@ namespace ApiMovies.Database.Services
 
         public async Task<List<MovieDTO>> GetAllMoviesAsync(string sortBy, string searchString, int? pageNumber)
         {
-            var actorsForThisMovie = new List<Actor>();
-            var genresForThisMovie = new List<Genre>();
-
             var dtoMovies = new List<MovieDTO>();
-
-            var movies = await _context.Movie.ToListAsync();
-            var actors = await _context.Actors.ToListAsync();
-            var movieActors = await _context.MovieActors.ToListAsync();
-            var genres = await _context.Genres.ToListAsync();
-            var movieGenrs = await _context.MovieGenres.ToListAsync();
+            var movies = await _context.Movie.ToListAsync();          
 
             foreach (var movie in movies)
             {
-                MovieDTO movieDto = new MovieDTO();
-                movieDto.Movie_Actors = new List<ActorDTO>();
-                movieDto.Movie_Genres = new List<GenreDTO>();
-                movieDto.Id = movie.Id;
-                movieDto.Title = movie.Title;
-                movieDto.Trailer = movie.Trailer;
-                movieDto.Summary = movie.Summary;
-                movieDto.ReleaseDate = movie.ReleaseDate;
-                movieDto.Poster = movie.Poster;
-                movieDto.Created = DateTime.Now;   
+                var movieDto = _mapper.Map<MovieDTO>(movie);
+                movieDto.Movie_Actors = await loadActorsForMovie(movie);
+                movieDto.Movie_Genres = await loadGenresForMovie(movie);
 
-                // load actors for movie
-                var movieActorsForThisMovie = movieActors.Where(x => x.MovieId == movie.Id);
-                if (movieActorsForThisMovie.Any())
-                {
-                    foreach (var mActor in movieActorsForThisMovie)
-                    {
-                        var actor = actors.Where(x => x.Id == mActor.ActorId).FirstOrDefault();
-                        var actorDto = new ActorDTO();
-
-                        actorDto.Id = actor.Id;
-                        actorDto.Name = actor.Name;
-                        actorDto.Biography = actor.Biography;
-                        actorDto.DateOfBirth = actor.DateOfBirth;
-                        actorDto.Picture = actor.Picture;
-                        
-                        movieDto.Movie_Actors.Add(actorDto);                       
-                    }
-                }
-
-                // load genres for movie
-                var movieGenresForThisMovie = movieGenrs.Where(x => x.MovieId == movie.Id);
-                foreach (var mGenre in movieGenresForThisMovie)
-                {
-                    var genre = genres.Where(x => x.Id == mGenre.GenreId).FirstOrDefault();
-
-                    var genreDto = new GenreDTO();
-                    genreDto.Id = genre.Id;
-                    genreDto.Name = genre.Name;
-
-                    movieDto.Movie_Genres.Add(genreDto);
-                }
                 dtoMovies.Add(movieDto);
             }
 
@@ -93,7 +47,7 @@ namespace ApiMovies.Database.Services
                 switch (sortBy)
                 {
                     case "title_desc":
-                    dtoMovies = dtoMovies.OrderByDescending(x => x.Title).ToList();
+                        dtoMovies = dtoMovies.OrderByDescending(x => x.Title).ToList();
                         break;
                     case "release_asc":
                         dtoMovies = dtoMovies.OrderBy(x => x.ReleaseDate).ToList();
@@ -121,70 +75,23 @@ namespace ApiMovies.Database.Services
 
         public async Task<MovieDTO> GetMoviesByIdAsync(int id)
         {
-            var dtoMovie = new MovieDTO();
-            var actorsForThisMovie = new List<Actor>();
-            var genresForThisMovie = new List<Genre>();            
-
             var movie = await _context.Movie.FirstOrDefaultAsync(x => x.Id == id);
-
-            if(movie == null)
+            if (movie == null)
             {
                 return null;
             }
 
-            var actors = await _context.Actors.ToListAsync();
-            var movieActors = await _context.MovieActors.ToListAsync();
-            var genres = await _context.Genres.ToListAsync();
-            var movieGenrs = await _context.MovieGenres.ToListAsync();
-
-            dtoMovie.Movie_Actors = new List<ActorDTO>();
-            dtoMovie.Movie_Genres = new List<GenreDTO>();
-            dtoMovie.Id = movie.Id;
-            dtoMovie.Title = movie.Title;
-            dtoMovie.Trailer = movie.Trailer;
-            dtoMovie.Summary = movie.Summary;
-            dtoMovie.ReleaseDate = movie.ReleaseDate;
-            dtoMovie.Poster = movie.Poster;
-            dtoMovie.Created = DateTime.Now;
-
-            // load actors for movie
-            var movieActorsForThisMovie = movieActors.Where(x => x.MovieId == movie.Id);
-
-                if (movieActorsForThisMovie.Any())
-                {
-                    foreach (var mActor in movieActorsForThisMovie)
-                    {
-                        var actor = actors.Where(x => x.Id == mActor.ActorId).FirstOrDefault();
-                        var actorDto = new ActorDTO();
-                        actorDto.Id = actor.Id;
-                        actorDto.Name = actor.Name;
-                        actorDto.Biography = actor.Biography;
-                        actorDto.DateOfBirth = actor.DateOfBirth;
-                        actorDto.Picture = actor.Picture;
-                        dtoMovie.Movie_Actors.Add(actorDto);
-                    }
-                }
-
-                // load genres for movie
-                var movieGenresForThisMovie = movieGenrs.Where(x => x.MovieId == movie.Id);
-                foreach (var mGenre in movieGenresForThisMovie)
-                {
-                    var genre = genres.Where(x => x.Id == mGenre.GenreId).FirstOrDefault();
-
-                    var genreDto = new GenreDTO();
-                    genreDto.Id = genre.Id;
-                    genreDto.Name = genre.Name;
-
-                dtoMovie.Movie_Genres.Add(genreDto);
-                }
+            var dtoMovie = _mapper.Map<MovieDTO>(movie);
+            dtoMovie.Movie_Actors = await loadActorsForMovie(movie);
+            dtoMovie.Movie_Genres = await loadGenresForMovie(movie);            
 
             // load ratings for movie
             var averageVote = 0.0;
-            var userVote = 0;
+            // var userVote = 0;
 
             if (await _context.Ratings.AnyAsync(x => x.MovieId == id))
             {
-                averageVote = await _context.Ratings.Where(x => x.MovieId == id).AverageAsync(x => x.Rate);               
+                averageVote = await _context.Ratings.Where(x => x.MovieId == id).AverageAsync(x => x.Rate);
             }
 
             return dtoMovie;
@@ -192,19 +99,19 @@ namespace ApiMovies.Database.Services
 
         public async Task AddMoviesAsync(MovieCreationDTO movieCreationDTO)
         {
-            var movie = _mapper.Map<Movie>(movieCreationDTO);  
+            var movie = _mapper.Map<Movie>(movieCreationDTO);
 
-            if(movieCreationDTO.Poster != null)
+            if (movieCreationDTO.Poster != null)
             {
                 movie.Poster = await _fileStorageService.SaveFile(_containerName, movieCreationDTO.Poster);
             }
-            
+
             movie.Created = DateTime.Now;
             await _context.Movie.AddAsync(movie);
             await _context.SaveChangesAsync();
 
             // add genres for movie        
-            var ganres = await _context.Genres.ToListAsync();            
+            var ganres = await _context.Genres.ToListAsync();
 
             for (int i = 0; i < movieCreationDTO.MovieGenres.Count; i++)
             {
@@ -251,78 +158,8 @@ namespace ApiMovies.Database.Services
                 await _context.SaveChangesAsync();
             }
 
-            //var movie = new Movie();
-            //movie.Id = movieDtoUpdate.Id; 
-            //movie.ReleaseDate = movieDtoUpdate.ReleaseDate;
-            //movie.Summary = movieDtoUpdate.Summary;
-            //movie.Title = movieDtoUpdate.Title;
-            //movie.Trailer = movieDtoUpdate.Trailer;
-
-            //EntityEntry updateMovie = _context.Entry<Movie>(movie);
-            //updateMovie.State = EntityState.Modified;
-
-                      
-            if(movieDtoUpdate.MovieGenres != null)
-            {
-                var movieGenreList = _context.MovieActors.Where(x => x.MovieId == id).ToListAsync();
-
-                for (int i = 0; i < movieDtoUpdate.MovieGenres.Count; i++)
-                {
-                    var movieGenre = new Movie_Genre();
-                    movieGenre.MovieId = id;
-                    movieGenre.GenreId = movieDtoUpdate.MovieGenres[i];
-
-                    //movieGenreList.Add(movieGenre);
-
-                    //_context.Entry(movieGenre).State = EntityState.Modified;
-                    //await _context.SaveChangesAsync();
-                }
-
-                //foreach (var item in movieGenreList)
-                //{
-                //    await _context.SaveChangesAsync();
-                //}
-            }
-
-
-
-            //foreach (var item in movieDtoUpdate.MovieGenres)
-            //{
-
-            //    genre.MovieId = movieDtoUpdate.Id;
-            //    genre.GenreId = genreId;
-            //    genre.Created = DateTime.Now;
-            //    //EntityEntry updateGenre = _context.Entry<Movie_Genre>(genre);
-            //    //updateGenre.State = EntityState.Modified;
-            //    await _context.MovieGenres.AddAsync(genre);
-            //    await _context.SaveChangesAsync();                
-            //}
-
+            // ** TODO update genres and actors **
             
-            if (movieDtoUpdate.MovieActors != null)
-            {
-                for (int i = 0; i < movieDtoUpdate.MovieActors.Count; i++)
-                {
-                    var movieActor = new Movie_Actor();
-                    movieActor.MovieId = id;
-                    movieActor.ActorId = movieDtoUpdate.MovieGenres[i];                    
-
-                    await _context.SaveChangesAsync();
-                }
-            }
-
-
-            //var actor = new Movie_Actor();
-            //foreach (var actorId in movieDtoUpdate.MovieActors)
-            //{
-            //    actor.MovieId = movieDtoUpdate.Id;
-            //    actor.ActorId = actorId;
-            //    actor.Created = DateTime.Now;
-            //    //EntityEntry updateActor = _context.Entry<Movie_Actor>(actor);
-            //    //updateActor.State = EntityState.Modified;
-            //    await _context.MovieActors.AddAsync(actor);
-            //    await _context.SaveChangesAsync();
-            //}            
         }
 
         public async Task DeleteMoviesAsync(int movieId)
@@ -335,8 +172,8 @@ namespace ApiMovies.Database.Services
                 await _fileStorageService.DeleteFile(deleteMovie.Poster, _containerName);
 
                 await _context.SaveChangesAsync();
-            }                     
-        }     
+            }
+        }
 
         protected void Dispose(bool disposing)
         {
@@ -354,6 +191,47 @@ namespace ApiMovies.Database.Services
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        private async Task<List<ActorDTO>> loadActorsForMovie(Movie movie)
+        {
+            var actorsList = new List<ActorDTO>();
+
+            var actors = await _context.Actors.ToListAsync();
+            var movieActors = await _context.MovieActors.ToListAsync();
+
+            var movieActorsForThisMovie = movieActors.Where(x => x.MovieId == movie.Id);
+            if (movieActorsForThisMovie.Any())
+            {
+                foreach (var movieActor in movieActorsForThisMovie)
+                {
+                    var actor = actors.Where(x => x.Id == movieActor.ActorId).FirstOrDefault();
+                    var actorDto = _mapper.Map<ActorDTO>(actor);
+
+                    actorsList.Add(actorDto);
+                }
+            }
+
+            return actorsList;
+        }
+
+        private async Task<List<GenreDTO>> loadGenresForMovie(Movie movie)
+        {
+            var genreList = new List<GenreDTO>();
+
+            var genres = await _context.Genres.ToListAsync();
+            var movieGenrs = await _context.MovieGenres.ToListAsync();
+
+            var movieGenresForThisMovie = movieGenrs.Where(x => x.MovieId == movie.Id);
+            foreach (var movieGenre in movieGenresForThisMovie)
+            {
+                var genre = genres.Where(x => x.Id == movieGenre.GenreId).FirstOrDefault();
+                var genreDto = _mapper.Map<GenreDTO>(genre);
+
+                genreList.Add(genreDto);
+            }
+
+            return genreList;
         }
     }
 }
